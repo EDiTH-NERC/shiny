@@ -1,30 +1,73 @@
 library(shiny)
-ui <- fluidPage(
-  titlePanel("Hello Shiny!"),
-  sidebarLayout(
-    sidebarPanel(
-      sliderInput(
-        inputId = "bins",
-        label = "Number of bins:",
-        min = 1,
-        max = 50,
-        value = 30
-      )
-    ),
-    mainPanel(
-      plotOutput(outputId = "distPlot")
-    )
-  )
+library(bslib)
+library(ggplot2)
+
+# Define UI for app that draws a histogram ----
+ui <- page_sidebar(
+  sidebar = sidebar(open = "open",
+    radioButtons("type", "Type",
+             c(Sampling = "sampling", Range = "range", 
+               Diversity = "richness", Diversification = "rates")),
+    radioButtons("rank", "Taxonomic rank",
+                 c(Species = "species", Genus = "genus", Family = "family"), selected = "genus"),
+    selectInput("group", "Group by",
+                c(None = ".", Family = "family", Genus = "genus", Country = "cc")),
+    selectInput("region", "Geographic region",
+                c("Global", "Caribbean", "Mediterranean", "Arabia", "Indo-Australian Archipelago"),
+                selected = "Caribbean"),
+    selectInput("family", "Family",
+                c(All = ".", "Acroporidae"),
+                selected = "All")
+  ),
+  plotOutput("plot", width=1100)
 )
-server <- function(input, output) {
-  output$distPlot <- renderPlot({
-    x <- faithful$waiting
-    bins <- seq(min(x), max(x), length.out = input$bins + 1)
-    hist(x,
-      breaks = bins, col = "#75AADB", border = "white",
-      xlab = "Waiting time to next eruption (in mins)",
-      main = "Histogram of waiting times"
-    )
+
+server <- function(input, output, session) {
+  data <- reactive({
+    read.csv("https://raw.githubusercontent.com/EDiTH-NERC/dash/refs/heads/main/data/test.csv")
   })
+  
+  filter_data <- reactive({
+    # Get data
+    df <- data()
+    # Filter rank
+    if (input$rank == "species") {
+      df <- subset(df, accepted_rank == "species")
+      df <- subset(df, !is.na(species))
+    }
+    if (input$rank == "genus") {
+      df <- subset(df, accepted_rank %in% c("species", "genus"))
+      df <- subset(df, !is.na(genus))
+    } 
+    if (input$rank == "family") {
+      df <- subset(df, accepted_rank %in% c("species", "genus", "family"))
+      df <- subset(df, !is.na(family))
+    }
+    # Filter region
+    if (input$region == "Caribbean") {
+      df <- subset(df, region == "Caribbean")
+    }
+    if (input$region == "Mediterranean") {
+      df <- subset(df, region == "Mediterranean")
+    }
+    if (input$region == "Arabia") {
+      df <- subset(df, region == "Arabia")
+    }
+    if (input$region == "Indo-Australian Archipelago") {
+      df <- subset(df, region == "Indo-Australian Archipelago")
+    }
+    # Filter family
+    if (input$family != ".") {
+      df <- subset(df, family == input$family)
+    }
+    df
+  })
+
+  output$plot <- renderPlot({ 
+    ggplot(data = filter_data(), aes(x = min_ma, y = max_ma)) +
+      geom_point()
+  }, res = 140)
 }
+
+# Create Shiny app ----
 shinyApp(ui = ui, server = server)

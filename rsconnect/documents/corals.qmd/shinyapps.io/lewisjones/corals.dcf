@@ -1,0 +1,15 @@
+name: corals
+title: corals
+username: lewisjones
+account: lewisjones
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 14592305
+bundleId: 10165052
+url: https://lewisjones.shinyapps.io/corals/
+version: 1
+quarto_version: 1.6.40
+quarto_engines: knitr
+asMultiple: FALSE
+asStatic: FALSE
+ignoredFiles: corals_data/data_chunks_index.txt|data/PBDB.RDS|data/raw/PBDB_2025-04-19.RDS|data/raw/PBDB_2025-04-22.RDS|redundant/example.qmd|redundant/example.R|redundant/test.qmd|R
